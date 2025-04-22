@@ -1,0 +1,15 @@
+{
+  "name" : "fatima",
+  "inventory" : [
+    {
+      "name" : "key",
+      "canTake" : true,
+      "description" : "A rusty key."
+    }
+  ],
+  "score" : 20,
+  "currentRoom" : 1,
+  "achievements" : [
+
+  ]
+}

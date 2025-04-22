@@ -1,0 +1,114 @@
+{
+  "rooms": [
+    {
+      "id": 1,
+      "name": "Entrance Hall",
+      "description": "A grand hall with dusty chandeliers and marble floors.",
+      "exits": { "north": 2, "east": 3 },
+      "items": [
+        { "name": "key", "description": "A rusty key.", "canTake": true }
+      ],
+      "characters": [
+        { "name": "Guard", "dialogue": "You need a key to proceed." }
+      ],
+      "puzzle": {
+        "id": 1,
+        "description": "A locked chest requires a password.",
+        "solution": "open sesame",
+        "reward": "gold coin",
+        "isSolved": false
+      }
+    },
+    {
+      "id": 2,
+      "name": "Library",
+      "description": "A room filled with ancient books and a musty smell.",
+      "exits": { "south": 1, "west": 4 },
+      "items": [
+        { "name": "book", "description": "An old tome with strange symbols.", "canTake": true }
+      ],
+      "characters": [],
+      "puzzle": null
+    },
+    {
+      "id": 3,
+      "name": "Armory",
+      "description": "A room with rusty weapons mounted on the walls.",
+      "exits": { "west": 1 },
+      "items": [
+        { "name": "sword", "description": "A dull sword.", "canTake": true }
+      ],
+      "characters": [],
+      "puzzle": {
+        "id": 2,
+        "description": "A riddle: What has keys but can't open locks?",
+        "solution": "piano",
+        "reward": "shield",
+        "isSolved": false
+      }
+    },
+    {
+      "id": 4,
+      "name": "Kitchen",
+      "description": "A dusty kitchen with old utensils and a faint smell of spices.",
+      "exits": { "east": 2, "north": 5 },
+      "items": [
+        { "name": "rope", "description": "A sturdy rope.", "canTake": true }
+      ],
+      "characters": [],
+      "puzzle": null
+    },
+    {
+      "id": 5,
+      "name": "Dining Hall",
+      "description": "A large hall with a long table covered in cobwebs.",
+      "exits": { "south": 4, "east": 6 },
+      "items": [],
+      "characters": [
+        { "name": "Chef", "dialogue": "Have you seen my recipe book?" }
+      ],
+      "puzzle": null
+    },
+    {
+      "id": 6,
+      "name": "Garden",
+      "description": "An overgrown garden with strange, glowing plants.",
+      "exits": { "west": 5, "north": 7 },
+      "items": [
+        { "name": "hook", "description": "A metal hook.", "canTake": true }
+      ],
+      "characters": [],
+      "puzzle": {
+        "id": 3,
+        "description": "Combine two items to proceed.",
+        "solution": "rope with hook",
+        "reward": "grappling hook",
+        "isSolved": false
+      }
+    },
+    {
+      "id": 7,
+      "name": "Tower",
+      "description": "A tall tower with a locked door and a spiral staircase.",
+      "exits": { "south": 6, "up": 8 },
+      "items": [],
+      "characters": [],
+      "puzzle": null
+    },
+    {
+      "id": 8,
+      "name": "Treasure Room",
+      "description": "A room filled with gold, jewels, and a glowing crown.",
+      "exits": {},
+      "items": [],
+      "characters": [],
+      "puzzle": {
+        "id": 4,
+        "description": "The final puzzle: What is the answer to life, the universe, and everything?",
+        "solution": "42",
+        "reward": "crown",
+        "isSolved": false
+      }
+    }
+  ]
+}
