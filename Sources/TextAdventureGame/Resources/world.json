@@ -16,8 +16,7 @@
         "description": "A locked chest requires a password.",
         "solution": "open sesame",
         "reward": "gold coin",
-        "isSolved": false,
-        "type": "textSolution"
+        "isSolved": false
       }
     },
     {
@@ -42,11 +41,10 @@
       "characters": [],
       "puzzle": {
         "id": 2,
-        "description": "A strange board with sliding tiles that need to be arranged in order.",
-        "solution": "sliding puzzle",
+        "description": "A riddle: What has keys but can't open locks?",
+        "solution": "piano",
         "reward": "shield",
-        "isSolved": false,
-        "type": "slidingPuzzle"
+        "isSolved": false
       }
     },
     {
@@ -82,11 +80,10 @@
       "characters": [],
       "puzzle": {
         "id": 3,
-        "description": "Cards with symbols are scattered around. They seem to have matching pairs.",
-        "solution": "memory match",
+        "description": "Combine two items to proceed.",
+        "solution": "rope with hook",
         "reward": "grappling hook",
-        "isSolved": false,
-        "type": "memoryMatch"
+        "isSolved": false
       }
     },
     {
@@ -96,14 +93,7 @@
       "exits": { "south": 6, "up": 8 },
       "items": [],
       "characters": [],
-      "puzzle": {
-        "id": 4,
-        "description": "A complex maze is etched into the wall. You need to find the path through it.",
-        "solution": "maze solution",
-        "reward": "tower key",
-        "isSolved": false,
-        "type": "mazeGame"
-      }
+      "puzzle": null
     },
     {
       "id": 8,
@@ -113,12 +103,11 @@
       "items": [],
       "characters": [],
       "puzzle": {
-        "id": 5,
+        "id": 4,
         "description": "The final puzzle: What is the answer to life, the universe, and everything?",
         "solution": "42",
         "reward": "crown",
-        "isSolved": false,
-        "type": "textSolution"
+        "isSolved": false
       }
     }
   ]

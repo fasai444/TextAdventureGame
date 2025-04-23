@@ -13,9 +13,9 @@ let package = Package(
             dependencies: [],
             path: "Sources",
             resources: [
-                .process("Resources/world.json")
+                .copy("TextAdventureGame/Resources/world.json"),
+                .copy("TextAdventureGame/Resources/save.json")
             ]
-            
         )
     ]
 )
