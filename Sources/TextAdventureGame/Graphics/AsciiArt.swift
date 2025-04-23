@@ -150,370 +150,430 @@ struct AsciiArt {
         """
         print(view)
     }
-    // Add this to Sources/Graphics/AsciiArt.swift
-struct SlidingPuzzle {
-    private var grid: [[Int]]
-    private let size: Int
-    private var emptyRow: Int
-    private var emptyCol: Int
     
-    init(size: Int) {
-        self.size = size
+    // Define the SlidingPuzzle struct
+    struct SlidingPuzzle {
+        let size: Int
+        var grid: [[Int]]
+        var emptyRow: Int
+        var emptyCol: Int
+        var moves = 0
+        var solved = false
         
-        // Initialize ordered grid
-        var values = Array(1...(size*size-1)) + [0] // 0 represents empty space
-        grid = Array(repeating: Array(repeating: 0, count: size), count: size)
-        
-        // Fill grid with values
-        for row in 0..<size {
-            for col in 0..<size {
-                grid[row][col] = values[row * size + col]
-            }
-        }
-        
-        emptyRow = size - 1
-        emptyCol = size - 1
-        
-        // Shuffle grid (make valid, solvable moves)
-        for _ in 0..<100 {
-            let directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-            let validMoves = directions.filter { dir in
-                let newRow = emptyRow + dir.0
-                let newCol = emptyCol + dir.1
-                return newRow >= 0 && newRow < size && newCol >= 0 && newCol < size
+        init(size: Int) {
+            self.size = size
+            let values = Array(1...(size*size-1)) + [0] // 0 represents empty space
+            var shuffledValues = values.shuffled()
+            
+            // Make sure the puzzle is solvable
+            while !SlidingPuzzle.isSolvable(values: shuffledValues, size: size) {
+                shuffledValues = values.shuffled()
             }
             
-            if let move = validMoves.randomElement() {
-                swapWithEmpty(row: emptyRow + move.0, col: emptyCol + move.1)
+            // Initialize the grid
+            self.grid = Array(repeating: Array(repeating: 0, count: size), count: size)
+            var index = 0
+            for row in 0..<size {
+                for col in 0..<size {
+                    grid[row][col] = shuffledValues[index]
+                    if grid[row][col] == 0 {
+                        emptyRow = row
+                        emptyCol = col
+                    }
+                    index += 1
+                }
+            }
+            
+            // Default values for emptyRow and emptyCol if not set (should not happen)
+            self.emptyRow = 0
+            self.emptyCol = 0
+            
+            // Find the empty space
+            for row in 0..<size {
+                for col in 0..<size {
+                    if grid[row][col] == 0 {
+                        emptyRow = row
+                        emptyCol = col
+                        break
+                    }
+                }
             }
         }
-    }
-    
-    mutating func moveCell(_ row: Int, _ col: Int) -> Bool {
-        // Check if the position is adjacent to the empty cell
-        if (row == emptyRow && abs(col - emptyCol) == 1) || 
-           (col == emptyCol && abs(row - emptyRow) == 1) {
-            swapWithEmpty(row: row, col: col)
+        
+        // Helper function to check if a puzzle is solvable
+        private static func isSolvable(values: [Int], size: Int) -> Bool {
+            var inversions = 0
+            for i in 0..<values.count {
+                if values[i] == 0 { continue }
+                for j in (i+1)..<values.count {
+                    if values[j] == 0 { continue }
+                    if values[i] > values[j] {
+                        inversions += 1
+                    }
+                }
+            }
+            
+            // For odd-sized puzzles, the puzzle is solvable if inversions is even
+            if size % 2 == 1 {
+                return inversions % 2 == 0
+            } else {
+                // For even-sized puzzles, the puzzle is solvable if:
+                // - inversions is odd and the empty space is on an even row from the bottom
+                // - inversions is even and the empty space is on an odd row from the bottom
+                let emptyIndex = values.firstIndex(of: 0)!
+                let emptyRow = emptyIndex / size
+                let rowFromBottom = size - emptyRow
+                return (inversions % 2 == 0) == (rowFromBottom % 2 == 1)
+            }
+        }
+        
+        mutating func move(direction: String) -> Bool {
+            var newRow = emptyRow
+            var newCol = emptyCol
+            
+            switch direction.lowercased() {
+            case "up": newRow -= 1
+            case "down": newRow += 1
+            case "left": newCol -= 1
+            case "right": newCol += 1
+            default: return false
+            }
+            
+            // Check if move is valid
+            if newRow < 0 || newRow >= size || newCol < 0 || newCol >= size {
+                return false
+            }
+            
+            // Swap tiles
+            grid[emptyRow][emptyCol] = grid[newRow][newCol]
+            grid[newRow][newCol] = 0
+            emptyRow = newRow
+            emptyCol = newCol
+            moves += 1
+            
+            // Check if puzzle is solved
+            checkIfSolved()
+            
             return true
         }
-        return false
-    }
-    
-    mutating func swapWithEmpty(row: Int, col: Int) {
-        grid[emptyRow][emptyCol] = grid[row][col]
-        grid[row][col] = 0
-        emptyRow = row
-        emptyCol = col
-    }
-    
-    func isSolved() -> Bool {
-        var expectedValue = 1
-        for row in 0..<size {
-            for col in 0..<size {
-                if row == size - 1 && col == size - 1 {
-                    if grid[row][col] != 0 {
-                        return false
+        
+        mutating func checkIfSolved() {
+            var expected = 1
+            for row in 0..<size {
+                for col in 0..<size {
+                    // Skip the last cell which should be empty
+                    if row == size-1 && col == size-1 {
+                        solved = grid[row][col] == 0
+                        return
                     }
-                } else if grid[row][col] != expectedValue {
-                    return false
+                    
+                    if grid[row][col] != expected {
+                        solved = false
+                        return
+                    }
+                    expected += 1
                 }
-                expectedValue += 1
             }
+            solved = true
         }
-        return true
+        
+        func display() -> String {
+            var result = "\n"
+            for row in 0..<size {
+                result += " "
+                for col in 0..<size {
+                    if grid[row][col] == 0 {
+                        result += "   "
+                    } else {
+                        let value = grid[row][col]
+                        result += String(format: "%2d ", value)
+                    }
+                }
+                result += "\n"
+            }
+            return result
+        }
     }
     
-    func render() -> String {
-        var result = ""
+    // Define the MemoryGame struct
+    struct MemoryGame {
+        var rows: Int
+        var cols: Int
+        var cards: [[String]]
+        var revealed: [[Bool]]
+        var lastRevealedRow: Int?
+        var lastRevealedCol: Int?
+        var moves = 0
+        var matchesFound = 0
+        var totalMatches: Int
+        var gameOver = false
         
-        // Top border
-        result += "+" + String(repeating: "---+", count: size) + "\n"
-        
-        // Grid cells
-        for row in 0..<size {
-            result += "|"
-            for col in 0..<size {
-                let value = grid[row][col]
-                let cellText = value == 0 ? "   " : String(format: " %2d ", value)
-                result += cellText + "|"
-            }
-            result += "\n"
+        init(rows: Int, cols: Int) {
+            self.rows = rows
+            self.cols = cols
             
-            // Row border
-            result += "+" + String(repeating: "---+", count: size) + "\n"
-        }
-        
-        return result
-    }
-}
-
-// Add this to AsciiArt
-static func slidingPuzzleInstructions() -> String {
-    return """
-    +-----------------------------------+
-    |       SLIDING PUZZLE              |
-    |-----------------------------------|
-    | Arrange numbers in order from 1-8 |
-    | with the empty space at bottom    |
-    | right.                            |
-    |                                   |
-    | Commands:                         |
-    | - slide <row> <col>               |
-    | - solve                           |
-    +-----------------------------------+
-    """
-}
-// Add to Sources/Graphics/AsciiArt.swift
-struct MemoryGame {
-    private var cards: [[Character]]
-    private var revealed: [[Bool]]
-    private let symbols = ["A", "B", "C", "D", "E", "F", "G", "H"]
-    private var pairsFound = 0
-    private var totalPairs: Int
-    private var lastRevealedRow: Int?
-    private var lastRevealedCol: Int?
-    
-    init(rows: Int, cols: Int) {
-        // Ensure even number of cells
-        assert(rows * cols % 2 == 0, "Grid must have even number of cells")
-        
-        self.cards = Array(repeating: Array(repeating: " ", count: cols), count: rows)
-        self.revealed = Array(repeating: Array(repeating: false, count: cols), count: rows)
-        self.totalPairs = rows * cols / 2
-        
-        // Create pairs of symbols
-        var symbols = Array(repeating: self.symbols, count: 2).flatMap { $0 }
-        symbols = Array(symbols.prefix(totalPairs * 2))
-        symbols.shuffle()
-        
-        // Place symbols on grid
-        var index = 0
-        for row in 0..<rows {
-            for col in 0..<cols {
-                cards[row][col] = Character(symbols[index])
-                index += 1
+            // Make sure rows * cols is even
+            if rows * cols % 2 != 0 {
+                fatalError("Memory game requires an even number of cards")
+            }
+            
+            self.cards = Array(repeating: Array(repeating: " ", count: cols), count: rows)
+            self.revealed = Array(repeating: Array(repeating: false, count: cols), count: rows)
+            self.totalMatches = (rows * cols) / 2
+            
+            // Generate pairs of symbols
+            let symbols = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", 
+                          "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+            
+            var availableSymbols = symbols.prefix(totalMatches).flatMap { [$0, $0] }
+            availableSymbols.shuffle()
+            
+            var index = 0
+            for row in 0..<rows {
+                for col in 0..<cols {
+                    cards[row][col] = availableSymbols[index]
+                    index += 1
+                }
             }
         }
-    }
-    
-    mutating func revealCard(row: Int, col: Int) -> Bool {
-        // Check if cell is valid and not already revealed
-        guard row >= 0 && row < cards.count && col >= 0 && col < cards[0].count && !revealed[row][col] else {
-            return false
-        }
         
-        // If this is first card to reveal in this turn
-        if lastRevealedRow == nil {
+        mutating func revealCard(row: Int, col: Int) -> Bool {
+            // Check if the card is already revealed
+            if revealed[row][col] {
+                return false
+            }
+            
+            // Reveal the card
             revealed[row][col] = true
-            lastRevealedRow = row
-            lastRevealedCol = col
-            return true
+            
+            // If this is the first card in a pair
+            if lastRevealedRow == nil {
+                lastRevealedRow = row
+                lastRevealedCol = col
+                return true
+            }
+            
+            // This is the second card
+            moves += 1
+            
+            // Check if the cards match
+            if cards[row][col] == cards[lastRevealedRow!][lastRevealedCol!] {
+                // Match found
+                matchesFound += 1
+                lastRevealedRow = nil
+                lastRevealedCol = nil
+                
+                // Check if game is over
+                if matchesFound == totalMatches {
+                    gameOver = true
+                }
+                
+                return true
+            } else {
+                // No match, cards will be hidden after a delay
+                return true
+            }
         }
         
-        // If this is second card to reveal in this turn
-        revealed[row][col] = true
-        
-        // Check if cards match
-        if cards[row][col] == cards[lastRevealedRow!][lastRevealedCol!] {
-            // Match found!
-            pairsFound += 1
-            lastRevealedRow = nil
-            lastRevealedCol = nil
-            return true
-        } else {
-            // No match
-            return true
+        mutating func hideUnmatchedCards() {
+            // Hide cards that don't match
+            if lastRevealedRow != nil && lastRevealedCol != nil {
+                revealed[lastRevealedRow!][lastRevealedCol!] = false
+                lastRevealedRow = nil
+                lastRevealedCol = nil
+            }
         }
-    }
-    
-    mutating func hideNonMatches() {
-        if let row = lastRevealedRow, let col = lastRevealedCol {
-            for r in 0..<cards.count {
-                for c in 0..<cards[0].count {
-                    if revealed[r][c] && (cards[r][c] != cards[row][col] || (r == row && c == col)) {
-                        if !isPaired(r, c) {
-                            revealed[r][c] = false
-                        }
+        
+        func display() -> String {
+            var result = "\n  "
+            
+            // Column headers
+            for c in 0..<cols {
+                result += " \(c) "
+            }
+            result += "\n"
+            
+            for r in 0..<rows {
+                result += "\(r) "
+                for c in 0..<cols {
+                    if revealed[r][c] {
+                        result += "[\(cards[r][c])]"
+                    } else {
+                        result += "[ ]"
+                    }
+                }
+                result += "\n"
+            }
+            
+            result += "\nMatches: \(matchesFound)/\(totalMatches)  Moves: \(moves)\n"
+            return result
+        }
+        
+        func allCardsWithSymbol(symbol: String) -> [(Int, Int)] {
+            var positions: [(Int, Int)] = []
+            for r in 0..<rows {
+                for c in 0..<cols {
+                    if revealed[r][c] && cards[r][c] == symbol {
+                        positions.append((r, c))
                     }
                 }
             }
-            lastRevealedRow = nil
-            lastRevealedCol = nil
+            return positions
         }
     }
     
-    private func isPaired(_ row: Int, _ col: Int) -> Bool {
-        let symbol = cards[row][col]
-        var pairCount = 0
+    // Define the MazeGame struct
+    struct MazeGame {
+        var width: Int
+        var height: Int
+        var maze: [[String]]
+        var playerRow: Int
+        var playerCol: Int
+        var exitRow: Int
+        var exitCol: Int
+        var moves = 0
+        var solved = false
         
-        for r in 0..<cards.count {
-            for c in 0..<cards[0].count {
-                if revealed[r][c] && cards[r][c] == symbol {
-                    pairCount += 1
+        init(width: Int, height: Int) {
+            // Ensure dimensions are odd for better maze generation
+            self.width = width % 2 == 0 ? width + 1 : width
+            self.height = height % 2 == 0 ? height + 1 : height
+            
+            // Initialize maze with walls
+            self.maze = Array(repeating: Array(repeating: "#", count: width), count: height)
+            
+            // Simple maze generation (just a border with some random walls)
+            for row in 1..<height-1 {
+                for col in 1..<width-1 {
+                    if row % 2 == 1 || col % 2 == 1 {
+                        maze[row][col] = "."
+                    }
                 }
             }
-        }
-        
-        return pairCount > 1
-    }
-    
-    func isCompleted() -> Bool {
-        return pairsFound == totalPairs
-    }
-    
-    func render() -> String {
-        var result = "  "
-        // Column headers
-        for col in 0..<cards[0].count {
-            result += " \(col) "
-        }
-        result += "\n"
-        
-        for row in 0..<cards.count {
-            result += "\(row) "
-            for col in 0..<cards[0].count {
-                if revealed[row][col] {
-                    result += "[\(cards[row][col])]"
-                } else {
-                    result += "[ ]"
-                }
+            
+            // Ensure entrance and exit have paths
+            for row in 1..<height-1 {
+                maze[row][1] = "."
+                maze[row][width-2] = "."
             }
-            result += "\n"
-        }
-        return result
-    }
-}
-
-// Add this to AsciiArt
-static func memoryGameInstructions() -> String {
-    return """
-    +-----------------------------------+
-    |       MEMORY MATCH GAME           |
-    |-----------------------------------|
-    | Find all matching pairs of cards  |
-    | by revealing them one at a time.  |
-    |                                   |
-    | Commands:                         |
-    | - reveal <row> <col>              |
-    | - solve                           |
-    +-----------------------------------+
-    """
-}
-}
-// Add to Sources/Graphics/AsciiArt.swift
-struct MazeGame {
-    private var maze: [[Character]]
-    private var playerRow: Int
-    private var playerCol: Int
-    private var exitRow: Int
-    private var exitCol: Int
-    
-    init(width: Int, height: Int) {
-        // Create a simple maze
-        // # = wall, . = path, P = player, E = exit
-        maze = Array(repeating: Array(repeating: "#", count: width), count: height)
-        
-        // Simple algorithm to create paths
-        for row in 1..<height-1 {
+            
             for col in 1..<width-1 {
-                if (row % 2 == 1 || col % 2 == 1) && 
-                   Int.random(in: 0...100) > 30 {
-                    maze[row][col] = "."
-                }
+                maze[1][col] = "."
+                maze[height-2][col] = "."
             }
+            
+            // Place player at entrance
+            playerRow = height / 2
+            playerCol = 1
+            maze[playerRow][playerCol] = "P"
+            
+            // Place exit at far end
+            exitRow = height / 2
+            exitCol = width - 2
+            maze[exitRow][exitCol] = "E"
         }
         
-        // Ensure a path exists
-        for row in 1..<height-1 {
-            maze[row][1] = "."
-            maze[row][width-2] = "."
-        }
-        for col in 1..<width-1 {
-            maze[1][col] = "."
-            maze[height-2][col] = "."
-        }
-        
-        // Place player at start
-        playerRow = 1
-        playerCol = 1
-        maze[playerRow][playerCol] = "P"
-        
-        // Place exit
-        exitRow = height - 2
-        exitCol = width - 2
-        maze[exitRow][exitCol] = "E"
-    }
-    
-    mutating func movePlayer(direction: String) -> Bool {
-        var newRow = playerRow
-        var newCol = playerCol
-        
-        switch direction.lowercased() {
-        case "n", "north": newRow -= 1
-        case "s", "south": newRow += 1
-        case "e", "east": newCol += 1
-        case "w", "west": newCol -= 1
-        default:
+        mutating func move(direction: String) -> Bool {
+            var newRow = playerRow
+            var newCol = playerCol
+            
+            switch direction.lowercased() {
+            case "up": newRow -= 1
+            case "down": newRow += 1
+            case "left": newCol -= 1
+            case "right": newCol += 1
+            default: return false
+            }
+            
+            // Check if move is valid
+            if newRow < 0 || newRow >= height || newCol < 0 || newCol >= width {
+                return false
+            }
+            
+            // Check if destination is walkable
+            if maze[newRow][newCol] == "." || maze[newRow][newCol] == "E" {
+                // Update player position
+                moves += 1
+                maze[playerRow][playerCol] = "."
+                
+                // Check if player reached the exit
+                if newRow == exitRow && newCol == exitCol {
+                    solved = true
+                }
+                
+                // Update player position
+                playerRow = newRow
+                playerCol = newCol
+                maze[playerRow][playerCol] = "P"
+                
+                return true
+            }
+            
             return false
         }
         
-        // Check if move is valid
-        if newRow >= 0 && newRow < maze.count && newCol >= 0 && newCol < maze[0].count &&
-           (maze[newRow][newCol] == "." || maze[newRow][newCol] == "E") {
-            
-            // Update player position
-            maze[playerRow][playerCol] = "."
-            playerRow = newRow
-            playerCol = newCol
-            
-            // Check if reached exit
-            if playerRow == exitRow && playerCol == exitCol {
-                return true // Game complete
-            }
-            
-            maze[playerRow][playerCol] = "P"
-            return false // Move successful but game not complete
-        }
-        
-        return false // Invalid move
-    }
-    
-    func render() -> String {
-        var result = ""
-        for row in maze {
-            for cell in row {
-                switch cell {
-                case "#": result += "■"
-                case ".": result += "·"
-                case "P": result += "☺"
-                case "E": result += "★"
-                default: result += cell
+        func display() -> String {
+            var result = "\n"
+            for row in 0..<height {
+                for col in 0..<width {
+                    let cell = maze[row][col]
+                    switch cell {
+                    case "#": result += "■"
+                    case ".": result += "·"
+                    case "P": result += "☺"
+                    case "E": result += "★"
+                    default: result += cell
+                    }
                 }
+                result += "\n"
             }
-            result += "\n"
+            return result + "\nMoves: \(moves)\n"
         }
-        return result
     }
     
-    func isCompleted() -> Bool {
-        return playerRow == exitRow && playerCol == exitCol
+    static func mazeGameInstructions() -> String {
+        return """
+        \n== MAZE GAME INSTRUCTIONS ==
+        Find your way through the maze to the exit.
+        
+        Controls:
+        - up/down/left/right: Move in that direction
+        - q: Quit the maze game
+        
+        Legend:
+        - ☺: Your position
+        - ★: Exit
+        - ■: Wall
+        - ·: Path
+        
+        Reach the exit to win!
+        """
     }
-}
-
-// Add this to AsciiArt
-static func mazeGameInstructions() -> String {
-    return """
-    +-----------------------------------+
-    |       MAZE GAME                   |
-    |-----------------------------------|
-    | Find your way through the maze    |
-    | to reach the exit (★).            |
-    |                                   |
-    | Commands:                         |
-    | - move n/s/e/w                    |
-    | - solve                           |
-    +-----------------------------------+
-    Legend:
-    ■ = Wall  · = Path  ☺ = You  ★ = Exit
-    """
+    
+    static func slidingPuzzleInstructions() -> String {
+        return """
+        \n== SLIDING PUZZLE INSTRUCTIONS ==
+        Rearrange the tiles in numerical order.
+        
+        Controls:
+        - up/down/left/right: Slide a tile into the empty space
+        - q: Quit the puzzle
+        
+        The empty space is represented by a blank.
+        Arrange the numbers in order, with the empty space in the bottom-right corner.
+        """
+    }
+    
+    static func memoryGameInstructions() -> String {
+        return """
+        \n== MEMORY GAME INSTRUCTIONS ==
+        Find all matching pairs of cards.
+        
+        Controls:
+        - Enter row and column (e.g., "1 2") to reveal a card
+        - q: Quit the memory game
+        
+        Find all matching pairs to win!
+        """
+    }
 }

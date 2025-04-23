@@ -1,15 +1,30 @@
 {
-  "name" : "fatima",
+  "score" : 160,
   "inventory" : [
     {
+      "description" : "A rusty key.",
       "name" : "key",
+      "canTake" : true
+    },
+    {
+      "description" : "A sturdy rope.",
       "canTake" : true,
-      "description" : "A rusty key."
+      "name" : "rope"
+    },
+    {
+      "description" : "A rusty key.",
+      "canTake" : true,
+      "name" : "key"
     }
   ],
-  "score" : 20,
-  "currentRoom" : 1,
+  "name" : "fatima",
+  "currentRoom" : 3,
   "achievements" : [
-
+    "Visited room 2",
+    "Visited room 4",
+    "Visited room 2",
+    "Visited room 1",
+    "Solved puzzle: 1",
+    "Visited room 3"
   ]
 }
